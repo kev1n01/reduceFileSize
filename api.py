@@ -14,13 +14,13 @@ from pydantic import BaseModel
 from fastapi.responses import FileResponse
 
 class OptimizationResponse(BaseModel):
-    original_size: float
-    final_size: float
-    reduction_percentage: float
-    execution_time: float
-    images_processed: int
-    images_optimized: int
-    optimized_html: str
+    tamaño_original: float
+    tamaño_final: float
+    porcentaje_reducido: float
+    tiempo_ejecucion_app: float
+    imagenes_procesadas: int
+    imagenes_optimizadas: int
+    html_plano_optimizado: str
 
 def optimize_single_image(args):
     """
@@ -121,7 +121,11 @@ def optimize_html_images(content: str, quality: int = 85) -> tuple[str, dict]:
 app = FastAPI(title="Optimizador de Imágenes HTML",
              description="API para optimizar imágenes base64 en archivos HTML")
 
-@app.post("/optimize", response_model=OptimizationResponse)
+@app.get("/")
+async def root():
+    return {"message": "API para optimizar imágenes base64 en archivos HTML"}
+
+@app.post("/optimize/text/plane", response_model=OptimizationResponse)
 async def optimize_file(file: UploadFile = File(...), quality: Optional[int] = 85):
     """
     Optimiza las imágenes de un archivo HTML
@@ -142,20 +146,19 @@ async def optimize_file(file: UploadFile = File(...), quality: Optional[int] = 8
         reduction = ((stats['original_size'] - stats['final_size']) / stats['original_size']) * 100 if stats['original_size'] > 0 else 0
         
         return OptimizationResponse(
-            original_size=original_size,
-            final_size=final_size,
-            reduction_percentage=reduction,
-            execution_time=stats['execution_time'],
-            images_processed=stats['images_processed'],
-            images_optimized=stats['images_optimized'],
-            optimized_html=optimized_content  
+            tamaño_original=str(round(original_size, 2)),
+            tamaño_final=str(round(final_size, 2)),
+            porcentaje_reducido=str(round(reduction, 2)),
+            tiempo_ejecucion_app=str(round(stats['execution_time'], 2)),
+            imagenes_procesadas=stats['images_processed'],
+            imagenes_optimizadas=stats['images_optimized'],
+            html_plano_optimizado=optimized_content  
         )
         
     except Exception as e:
         raise HTTPException(500, detail=str(e))
 
-
-@app.post("/optimize/file")
+@app.post("/optimize/file/download")
 async def optimize_file_download(file: UploadFile = File(...), quality: Optional[int] = 85):
     """
     Optimiza las imágenes y devuelve el archivo HTML optimizado para descargar
